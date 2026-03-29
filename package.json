@@ -1,0 +1,12 @@
+{
+  "name": "push-sentinel",
+  "version": "0.1.0",
+  "description": "Warns you if secrets are in your git diff before push.",
+  "bin": {
+    "push-sentinel": "./bin/cli.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {}
+}
