@@ -83,6 +83,18 @@ npx --yes --prefer-online push-sentinel@latest uninstall
 
 Your original `pre-push` hook is restored automatically.
 
+## GitHub Actions
+
+Want to enforce secret scanning across your team or org? Use the [GitHub Action](https://github.com/Pmaind/push-sentinel-action):
+
+```yaml
+- uses: Pmaind/push-sentinel-action@v1
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+Blocks PRs with HIGH severity findings and posts a comment with details.
+
 ## Details
 
 - Scans only the commits being pushed — not your entire history
