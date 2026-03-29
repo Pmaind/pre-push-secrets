@@ -1,10 +1,24 @@
 # push-sentinel
 
-Warns you if secrets are in your git commits before push.
+**Catches secrets in your git commits before they leave your machine.**
 
-## What it does
+You've seen the stories. Someone pushes an AWS key to a public repo. Bots scrape GitHub in seconds. The bill arrives the next morning: $8,000.
 
-Scans the commits you are about to push for potential secrets (API keys, private keys, tokens) and prints a warning. **It does not block the push by default** — it is a safety net, not a gatekeeper.
+push-sentinel sits in your `pre-push` hook and warns you before that happens.
+
+```
+$ git push
+
+[push-sentinel] ⚠ Potential secrets found:
+
+  [HIGH] src/config.ts:12
+  AKIAIO...
+  → Risk: Full access to AWS resources. Attacker can create/delete
+           instances, incur charges, or exfiltrate data.
+  → To ignore this line: push-sentinel ignore src/config.ts:12
+
+  Push continues. Double-check before sharing.
+```
 
 ## Install
 
@@ -12,77 +26,54 @@ Scans the commits you are about to push for potential secrets (API keys, private
 npx push-sentinel install
 ```
 
-This writes a `pre-push` hook to `.git/hooks/`. Any existing hook is preserved as `pre-push.local` and called automatically after the scan.
+That's it. Runs automatically on every `git push` from now on.
 
-## Usage
+## What it detects
 
-### Automatic (after install)
+| Pattern | Severity |
+|---------|----------|
+| Private Key (RSA, EC, OPENSSH, DSA, PKCS#8) | 🔴 HIGH |
+| AWS Access Key (`AKIA...`) | 🔴 HIGH |
+| AWS Secret Key (entropy-based) | 🔴 HIGH |
+| GitHub Token (`ghp_`, `github_pat_`) | 🔴 HIGH |
+| Anthropic API Key (`sk-ant-...`) | 🟡 MEDIUM |
+| OpenAI API Key (`sk-...`) | 🟡 MEDIUM |
+| Generic API Key (variable name + high entropy) | 🟢 LOW |
+| `.env` file committed | 🟡 MEDIUM |
 
-The hook runs on every `git push`. No action required.
+## False positive? Ignore it in one command
 
+```sh
+push-sentinel ignore src/config.ts:12          # ignore a specific line
+push-sentinel ignore --pattern OPENAI_API_KEY  # ignore a pattern everywhere
+push-sentinel ignore --list                    # see all ignore rules
 ```
-[push-sentinel] ⚠ Potential secrets found:
 
-  [HIGH] src/config.ts:12
-  AKIAIO...
-  → Risk: Full access to AWS resources. Attacker can create/delete instances, incur charges, or exfiltrate data.
-  → To ignore this line: push-sentinel ignore src/config.ts:12
+Rules are saved to `.push-sentinel-ignore` in your repo root.
 
-  Push continues. Double-check before sharing.
+## Why warning-only by default?
+
+Blocking pushes creates friction. Friction leads to `--no-verify`. A warning at push time is early enough to catch real accidents — and you'll actually leave it installed.
+
+Want hard blocking for HIGH findings? Add `--block-on-high`:
+
+```sh
+# edit .git/hooks/pre-push, change the scan line to:
+npx push-sentinel scan --local-sha "$local_sha" --remote-sha "$remote_sha" --block-on-high
 ```
 
-### Manual scan
+## Manual scan
 
 ```sh
 npx push-sentinel scan
 ```
 
-### Block push on HIGH findings
+Manual scan checks, in order:
 
-To treat HIGH severity findings as blocking errors, edit `.git/hooks/pre-push` and change the scan line to:
-
-```sh
-npx push-sentinel scan --local-sha "$local_sha" --remote-sha "$remote_sha" --block-on-high
-```
-
-## Suppressing false positives
-
-```sh
-# Ignore a specific line
-push-sentinel ignore src/config.ts:12
-
-# Ignore all matches of a pattern name
-push-sentinel ignore --pattern OPENAI_API_KEY
-
-# List current ignore rules
-push-sentinel ignore --list
-
-# Remove a rule
-push-sentinel ignore --remove OPENAI_API_KEY
-```
-
-Rules are saved to `.push-sentinel-ignore` in the repo root. Add it to `.gitignore` or commit it — your choice.
-
-## Detected patterns
-
-| Pattern | Severity |
-|---------|----------|
-| Private Key (RSA, EC, OPENSSH, DSA, PKCS#8) | HIGH |
-| AWS Access Key (`AKIA...`) | HIGH |
-| AWS Secret Key (entropy-based) | HIGH |
-| GitHub Token (`ghp_`, `github_pat_`) | HIGH |
-| Anthropic API Key (`sk-ant-...`) | MEDIUM |
-| OpenAI API Key (`sk-...`) | MEDIUM |
-| Generic API Key (variable name + high entropy) | LOW |
-| `.env` file committed | MEDIUM |
-
-## Non-blocking design
-
-push-sentinel warns — it does not block — because:
-
-- Blocking creates friction that causes developers to skip or uninstall the hook
-- A warning seen at push time is still early enough to catch accidental leaks
-- Use `--block-on-high` if you want stricter enforcement for HIGH-severity findings
+- commits not yet pushed to your upstream
+- staged changes
+- unstaged working tree changes
+- the last commit as a final fallback
 
 ## Uninstall
 
@@ -90,9 +81,11 @@ push-sentinel warns — it does not block — because:
 npx push-sentinel uninstall
 ```
 
-The original `pre-push` hook (if any) is automatically restored.
+Your original `pre-push` hook is restored automatically.
 
-## Requirements
+## Details
 
+- Scans only the commits being pushed — not your entire history
+- Zero dependencies (Node.js stdlib only)
 - Node.js >= 16
-- No additional dependencies
+- Existing `pre-push` hooks are preserved and still run

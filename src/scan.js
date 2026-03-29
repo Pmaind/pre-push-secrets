@@ -119,14 +119,24 @@ function runGit(args) {
   return result.status === 0 ? (result.stdout || '') : null;
 }
 
+function runGitNonEmpty(args) {
+  const out = runGit(args);
+  return out && out.trim() ? out : null;
+}
+
 function getPushDiff(localSha, remoteSha) {
   const args = getDiffArgs(localSha, remoteSha);
   if (args) {
     const out = runGit(args);
     if (out !== null) return out;
   }
-  // Fallback for manual scan
-  return runGit(['log', '@{u}..HEAD', '-p']) ?? runGit(['log', '-1', '-p', 'HEAD']) ?? '';
+  // Manual scan: inspect unpushed commits first, then staged changes, then working tree,
+  // and finally fall back to the last commit if none of those produce a diff.
+  return runGitNonEmpty(['log', '@{u}..HEAD', '-p'])
+    ?? runGitNonEmpty(['diff', '--cached'])
+    ?? runGitNonEmpty(['diff'])
+    ?? runGit(['log', '-1', '-p', 'HEAD'])
+    ?? '';
 }
 
 function getPushedFileList(localSha, remoteSha) {
@@ -135,8 +145,10 @@ function getPushedFileList(localSha, remoteSha) {
     const out = runGit(args);
     if (out !== null) return out.split('\n').map((f) => f.trim()).filter(Boolean);
   }
-  // Fallback for manual scan
-  const out = runGit(['diff', '--name-only', '@{u}..HEAD'])
+  // Manual scan: include files from unpushed commits, staged changes, and working tree.
+  const out = runGitNonEmpty(['diff', '--name-only', '@{u}..HEAD'])
+    ?? runGitNonEmpty(['diff', '--name-only', '--cached'])
+    ?? runGitNonEmpty(['diff', '--name-only'])
     ?? runGit(['diff', '--name-only', 'HEAD~1..HEAD'])
     ?? '';
   return out.split('\n').map((f) => f.trim()).filter(Boolean);
