@@ -100,8 +100,9 @@ switch (command) {
     const localSha = localShaIdx !== -1 ? args[localShaIdx + 1] : undefined;
     const remoteSha = remoteShaIdx !== -1 ? args[remoteShaIdx + 1] : undefined;
     const findings = scan(localSha, remoteSha);
-    report(findings);
-    if (blockOnHigh && hasHighFindings(findings)) {
+    const willBlock = blockOnHigh && hasHighFindings(findings);
+    report(findings, { willBlock });
+    if (willBlock) {
       process.stderr.write('\n[push-sentinel] Push blocked: HIGH severity secret(s) detected. Remove the secret or run `push-sentinel ignore` to suppress.\n');
       process.exit(1);
     }

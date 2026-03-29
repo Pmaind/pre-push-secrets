@@ -13,7 +13,7 @@ function severityLabel(severity) {
   return `[${severity}]`;
 }
 
-function report(findings) {
+function report(findings, { willBlock = false } = {}) {
   if (findings.length === 0) {
     process.stderr.write('[push-sentinel] \u2713 No secrets detected.\n');
     return;
@@ -39,7 +39,11 @@ function report(findings) {
     process.stderr.write(`  + ${extra} more finding(s) not shown.\n\n`);
   }
 
-  process.stderr.write('  Push continues. Double-check before sharing.\n');
+  if (willBlock) {
+    process.stderr.write('  Push will be blocked.\n');
+  } else {
+    process.stderr.write('  Push continues. Double-check before sharing.\n');
+  }
 }
 
 function hasHighFindings(findings) {

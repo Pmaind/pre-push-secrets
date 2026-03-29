@@ -6,10 +6,14 @@
 #
 # We read each line and pass the SHAs explicitly so push-sentinel can compute
 # the exact range of commits being pushed (including new branch / first push).
+# Stdin is saved and re-supplied to pre-push.local so existing hooks still work.
 
 EXIT_CODE=0
+STDIN_DATA=""
 
 while read local_ref local_sha remote_ref remote_sha; do
+  STDIN_DATA="${STDIN_DATA}${local_ref} ${local_sha} ${remote_ref} ${remote_sha}
+"
   npx push-sentinel scan --local-sha "$local_sha" --remote-sha "$remote_sha"
   RESULT=$?
   if [ $RESULT -ne 0 ]; then
@@ -22,5 +26,5 @@ if [ $EXIT_CODE -ne 0 ]; then
 fi
 
 if [ -f "$(git rev-parse --git-dir)/hooks/pre-push.local" ]; then
-  "$(git rev-parse --git-dir)/hooks/pre-push.local" "$@"
+  echo "$STDIN_DATA" | "$(git rev-parse --git-dir)/hooks/pre-push.local" "$@"
 fi

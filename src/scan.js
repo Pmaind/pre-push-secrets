@@ -55,33 +55,31 @@ function loadIgnoreRules(repoRoot) {
   return { lines, patterns };
 }
 
-// Check if a file (regardless of line) matches any ignore rule
-function matchesIgnoreFile(filePath, ignoreLines) {
-  for (const rule of ignoreLines) {
-    if (rule === filePath) return true;
-    if (rule.endsWith('/**')) {
-      const dir = rule.slice(0, -3);
-      if (filePath.startsWith(dir + '/') || filePath === dir) return true;
-    }
-    if (rule.endsWith('*')) {
-      if (filePath.startsWith(rule.slice(0, -1))) return true;
-    }
+// Check if a file path matches a single glob-style ignore rule
+function matchesGlob(filePath, rule) {
+  if (rule.endsWith('/**')) {
+    const dir = rule.slice(0, -3);
+    return filePath.startsWith(dir + '/') || filePath === dir;
+  }
+  if (rule.endsWith('*')) {
+    return filePath.startsWith(rule.slice(0, -1));
   }
   return false;
 }
 
-// Check if a file:line matches any ignore rule (simple glob support)
+// Check if a file (regardless of line) matches any ignore rule
+function matchesIgnoreFile(filePath, ignoreLines) {
+  for (const rule of ignoreLines) {
+    if (rule === filePath || matchesGlob(filePath, rule)) return true;
+  }
+  return false;
+}
+
+// Check if a file:line matches any ignore rule
 function matchesIgnoreLine(filePath, lineNum, ignoreLines) {
   const target = `${filePath}:${lineNum}`;
   for (const rule of ignoreLines) {
-    if (rule === target) return true;
-    if (rule.endsWith('/**')) {
-      const dir = rule.slice(0, -3);
-      if (filePath.startsWith(dir + '/') || filePath === dir) return true;
-    }
-    if (rule.endsWith('*')) {
-      if (filePath.startsWith(rule.slice(0, -1))) return true;
-    }
+    if (rule === target || matchesGlob(filePath, rule)) return true;
   }
   return false;
 }
