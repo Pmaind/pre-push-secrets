@@ -14,7 +14,7 @@ STDIN_DATA=""
 while read local_ref local_sha remote_ref remote_sha; do
   STDIN_DATA="${STDIN_DATA}${local_ref} ${local_sha} ${remote_ref} ${remote_sha}
 "
-  npx push-sentinel scan --local-sha "$local_sha" --remote-sha "$remote_sha"
+  npx --yes --prefer-online push-sentinel@latest scan --local-sha "$local_sha" --remote-sha "$remote_sha"
   RESULT=$?
   if [ $RESULT -ne 0 ]; then
     EXIT_CODE=$RESULT

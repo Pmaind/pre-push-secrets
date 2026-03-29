@@ -23,7 +23,7 @@ $ git push
 ## Install
 
 ```sh
-npx push-sentinel install
+npx --yes --prefer-online push-sentinel@latest install
 ```
 
 That's it. Runs automatically on every `git push` from now on.
@@ -59,13 +59,13 @@ Want hard blocking for HIGH findings? Add `--block-on-high`:
 
 ```sh
 # edit .git/hooks/pre-push, change the scan line to:
-npx push-sentinel scan --local-sha "$local_sha" --remote-sha "$remote_sha" --block-on-high
+npx --yes --prefer-online push-sentinel@latest scan --local-sha "$local_sha" --remote-sha "$remote_sha" --block-on-high
 ```
 
 ## Manual scan
 
 ```sh
-npx push-sentinel scan
+npx --yes --prefer-online push-sentinel@latest scan
 ```
 
 Manual scan checks, in order:
@@ -78,7 +78,7 @@ Manual scan checks, in order:
 ## Uninstall
 
 ```sh
-npx push-sentinel uninstall
+npx --yes --prefer-online push-sentinel@latest uninstall
 ```
 
 Your original `pre-push` hook is restored automatically.
@@ -89,3 +89,4 @@ Your original `pre-push` hook is restored automatically.
 - Zero dependencies (Node.js stdlib only)
 - Node.js >= 16
 - Existing `pre-push` hooks are preserved and still run
+- For the most predictable versioning in a repo, install as a dev dependency and run the local binary via `npx push-sentinel`

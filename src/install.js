@@ -41,7 +41,7 @@ STDIN_DATA=""
 while read local_ref local_sha remote_ref remote_sha; do
   STDIN_DATA="${'$'}{STDIN_DATA}${'$'}{local_ref} ${'$'}{local_sha} ${'$'}{remote_ref} ${'$'}{remote_sha}
 "
-  npx push-sentinel scan --local-sha "$local_sha" --remote-sha "$remote_sha"
+  npx --yes --prefer-online push-sentinel@latest scan --local-sha "$local_sha" --remote-sha "$remote_sha"
   RESULT=$?
   if [ $RESULT -ne 0 ]; then
     EXIT_CODE=$RESULT
@@ -79,7 +79,7 @@ function install() {
   fs.writeFileSync(hookPath, hookContent(), 'utf8');
   fs.chmodSync(hookPath, 0o755);
   console.log('[push-sentinel] Installed pre-push hook.');
-  console.log('[push-sentinel] Tip: to block pushes on HIGH findings, edit the hook to use: npx push-sentinel scan --block-on-high');
+  console.log('[push-sentinel] Tip: to block pushes on HIGH findings, edit the hook to use: npx --yes --prefer-online push-sentinel@latest scan --block-on-high');
 }
 
 function uninstall() {
