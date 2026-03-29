@@ -177,6 +177,10 @@ function parseDiffAddedLines(diff) {
 // localSha / remoteSha: passed from the pre-push hook via --local-sha / --remote-sha flags.
 // When omitted (manual scan), falls back to upstream-based diff.
 function scan(localSha, remoteSha) {
+  // Ref deletion (git push origin :branch): local_sha is all zeros.
+  // There are no commits to scan — return immediately to avoid falling back
+  // to @{u}..HEAD and producing spurious warnings.
+  if (localSha === ZERO_SHA) return [];
   const repoRoot = getRepoRoot();
   const ignore = loadIgnoreRules(repoRoot);
   const findings = [];
