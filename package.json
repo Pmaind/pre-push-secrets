@@ -5,6 +5,23 @@
   "bin": {
     "push-sentinel": "./bin/cli.js"
   },
+  "files": [
+    "bin/",
+    "src/",
+    "hook-template.sh"
+  ],
+  "keywords": [
+    "git",
+    "pre-push",
+    "secrets",
+    "security",
+    "hook"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pmaind/pre-push-secrets"
+  },
   "engines": {
     "node": ">=16"
   },
